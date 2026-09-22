@@ -1,0 +1,52 @@
+# Render Blueprint for Evolution API
+# Note: Free tier has limitations (Postgres expires after 30 days, services sleep after inactivity)
+
+services:
+  - type: web
+    name: evolution-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: SERVER_URL
+        sync: false  # Set this to your Render URL after deploy (https://your-service.onrender.com)
+      - key: AUTHENTICATION_API_KEY
+        generateValue: true  # Render will generate a secure key
+      - key: DATABASE_PROVIDER
+        value: postgresql
+      - key: DATABASE_CONNECTION_URI
+        fromDatabase:
+          name: evolution-db
+          property: connectionString
+      - key: CACHE_REDIS_ENABLED
+        value: "true"
+      - key: CACHE_REDIS_URI
+        fromService:
+          type: keyvalue
+          name: evolution-redis
+          property: connectionString
+      - key: CACHE_LOCAL_ENABLED
+        value: "false"
+      - key: LOG_LEVEL
+        value: ERROR,WARN,INFO
+      - key: DEL_INSTANCE
+        value: "false"
+      - key: CONFIG_SESSION_PHONE_CLIENT
+        value: Evolution API
+      - key: CONFIG_SESSION_PHONE_NAME
+        value: Chrome
+      - key: QRCODE_LIMIT
+        value: "30"
+      - key: WEBHOOK_GLOBAL_ENABLED
+        value: "false"
+    healthCheckPath: /
+
+databases:
+  - name: evolution-db
+    plan: free
+    databaseName: evolution
+    user: evolution
+
+# Note: Free Key Value (Redis) must be created manually in the dashboard
+# because Blueprint free Key Value support can be limited.
